@@ -44,7 +44,7 @@ func (c *condition) excludes(v string) bool {
 	return false
 }
 
-func parsePipelines(data string, build drone.Build, repo drone.Repo, token string) ([]*resource, bool, error) {
+func parsePipelines(data string, build drone.Build, repo drone.Repo, token string, host string) ([]*resource, bool, error) {
 
 	resources, err := unmarshal([]byte(data))
 	if err != nil {
@@ -52,7 +52,7 @@ func parsePipelines(data string, build drone.Build, repo drone.Repo, token strin
 	}
 
 	pathsSeen := false
-	checkedGithub := false
+	checkedGitea := false
 	var changedFiles []string
 	for _, resource := range resources {
 		switch resource.Kind {
@@ -60,12 +60,12 @@ func parsePipelines(data string, build drone.Build, repo drone.Repo, token strin
 			// there must be a better way to check whether paths.include or paths.exclude is set
 			if len(append(resource.Trigger.Paths.Include, resource.Trigger.Paths.Exclude...)) > 0 {
 				pathsSeen = true
-				if !checkedGithub {
-					changedFiles, err = getFilesChanged(repo, build, token)
+				if !checkedGitea {
+					changedFiles, err = getFilesChanged(repo, build, token, host)
 					if err != nil {
 						return nil, false, err
 					}
-					checkedGithub = true
+					checkedGitea = true
 				}
 				skipPipeline := true
 				for _, p := range changedFiles {
@@ -103,12 +103,12 @@ func parsePipelines(data string, build drone.Build, repo drone.Repo, token strin
 				// there must be a better way to check whether paths.include or paths.exclude is set
 				if len(append(step.When.Paths.Include, step.When.Paths.Exclude...)) > 0 {
 					pathsSeen = true
-					if !checkedGithub {
-						changedFiles, err = getFilesChanged(repo, build, token)
+					if !checkedGitea {
+						changedFiles, err = getFilesChanged(repo, build, token, host)
 						if err != nil {
 							return nil, false, err
 						}
-						checkedGithub = true
+						checkedGitea = true
 					}
 					skipStep := true
 					for _, i := range changedFiles {

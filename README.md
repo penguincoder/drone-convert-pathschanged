@@ -1,4 +1,4 @@
-[![Build Status](https://cloud.drone.io/api/badges/meltwater/drone-convert-pathschanged/status.svg)](https://cloud.drone.io/meltwater/drone-convert-pathschanged)
+[![Build Status](https://cloud.drone.io/api/badges/penguincoder/drone-convert-pathschanged/status.svg)](https://cloud.drone.io/penguincoder/drone-convert-pathschanged)
 
 A [Drone](https://drone.io/) conversion extension to include/exclude pipelines and steps based on paths changed.
 
@@ -6,7 +6,7 @@ _Please note this project requires Drone server version 1.4 or higher._
 
 ## Installation
 
-1. Create a github token via https://github.com/settings/tokens with the scope of`repo` (see [issue 13](https://github.com/meltwater/drone-convert-pathschanged/issues/13) for background).
+1. Create a Gitea token.
 
 2. Create a shared secret:
 
@@ -22,7 +22,7 @@ $ docker run -d \
   --publish=3000:3000 \
   --env=DRONE_DEBUG=true \
   --env=DRONE_SECRET=bea26a2221fd8090ea38720fc445eca6 \
-  --env=GITHUB_TOKEN=9e6eij3ckzvpe9mrhnqcis6zf8dhopmm46e3pi96 \
+  --env=GITEA_TOKEN=9e6eij3ckzvpe9mrhnqcis6zf8dhopmm46e3pi96 \
   --restart=always \
   --name=converter meltwater/drone-convert-pathschanged
 ```

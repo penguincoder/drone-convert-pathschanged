@@ -5,15 +5,14 @@
 package main
 
 import (
-	"io"
-	"net/http"
 	"github.com/drone/drone-go/plugin/converter"
-	"github.com/meltwater/drone-convert-pathschanged/plugin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/meltwater/drone-convert-pathschanged/plugin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-
+	"io"
+	"net/http"
 )
 
 // spec provides the plugin settings.
@@ -23,7 +22,8 @@ type spec struct {
 	Text   bool   `envconfig:"DRONE_LOGS_TEXT"`
 	Secret string `envconfig:"DRONE_SECRET"`
 
-	Token string `envconfig:"GITHUB_TOKEN"`
+	Token string `envconfig:"GITEA_TOKEN"`
+	Host  string `envconfig:"GITEA_HOST"`
 }
 
 func main() {
@@ -47,6 +47,9 @@ func main() {
 	if spec.Token == "" {
 		logrus.Fatalln("missing token")
 	}
+	if spec.Host == "" {
+		logrus.Fatalln("missing host")
+	}
 	if spec.Bind == "" {
 		spec.Bind = ":3000"
 	}
@@ -54,20 +57,21 @@ func main() {
 	handler := converter.Handler(
 		plugin.New(
 			spec.Token,
+			spec.Host,
 		),
 		spec.Secret,
 		logrus.StandardLogger(),
 	)
-	
+
 	logrus.Infof("server listening on address %s", spec.Bind)
-	
+
 	http.Handle("/", handler)
 	http.HandleFunc("/healthz", healthz)
-	http.Handle("/metrics", promhttp.Handler())	
+	http.Handle("/metrics", promhttp.Handler())
 	logrus.Fatal(http.ListenAndServe(spec.Bind, nil))
 }
 
 func healthz(w http.ResponseWriter, r *http.Request) {
- 	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/plain")
 	io.WriteString(w, "OK")
 }

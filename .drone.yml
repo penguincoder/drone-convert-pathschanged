@@ -19,8 +19,8 @@ steps:
   image: plugins/docker:18
   settings:
     dry_run: true
-    dockerfile: docker/Dockerfile.linux.amd64
-    repo: meltwater/drone-convert-pathschanged
+    dockerfile: Dockerfile.linux.amd64
+    repo: penguincoder/drone-convert-pathschanged
   when:
     event:
     - pull_request
@@ -29,12 +29,12 @@ steps:
   image: plugins/docker:18
   settings:
     auto_tag: true
-    dockerfile: docker/Dockerfile.linux.amd64
+    dockerfile: Dockerfile.linux.amd64
     username:
       from_secret: docker_username
     password:
       from_secret: docker_password
-    repo: meltwater/drone-convert-pathschanged
+    repo: penguincoder/drone-convert-pathschanged
   when:
     event:
     - push

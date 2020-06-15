@@ -1,59 +1,37 @@
 package plugin
 
 import (
-	"context"
-
+	"code.gitea.io/sdk/gitea"
 	"github.com/drone/drone-go/drone"
-	"github.com/google/go-github/github"
-	"golang.org/x/oauth2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
-func getFilesChanged(repo drone.Repo, build drone.Build, token string) ([]string, error) {
-	newctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(newctx, ts)
+func getFilesChanged(repo drone.Repo, build drone.Build, token string, host string) ([]string, error) {
+	client := gitea.NewClient(host, token)
 
-	client := github.NewClient(tc)
-
-	var commitFiles []github.CommitFile
-	if build.Before == "" || build.Before == "0000000000000000000000000000000000000000" {
-		response, _, err := client.Repositories.GetCommit(newctx, repo.Namespace, repo.Name, build.After)
-		if err != nil {
-			return nil, err
-		}
-		commitFiles = response.Files
-	} else {
-		response, _, err := client.Repositories.CompareCommits(newctx, repo.Namespace, repo.Name, build.Before, build.After)
-		if err != nil {
-			return nil, err
-		}
-		commitFiles = response.Files
-	}
-    rateLimit, _,err := client.RateLimits(newctx)
+	response, err := client.GetTrees(repo.Namespace, repo.Name, build.After, false)
+	GiteaApiCount.Inc()
 	if err != nil {
-		logrus.Fatalln("No metrics")
+		logrus.Fatalln("Err in getting tree from gitea: %s", err)
+		return nil, err
 	}
-	//metrics.GithubApiCount.Set(float64(rateLimit.Core.Remaining))
-    GithubApiCount.Set(float64(rateLimit.Core.Remaining))
 	var files []string
-	for _, f := range commitFiles {
-		files = append(files, *f.Filename)
+	for _, f := range response.Entries {
+		files = append(files, f.Path)
 	}
 
 	return files, nil
 }
 
 var (
-	GithubApiCount = prometheus.NewGauge(
-	prometheus.GaugeOpts{
-		   Name: "github_api_calls_remaining",
-		   Help: "Total number of github api calls per hour remaining",
-})
+	GiteaApiCount = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "gitea_api_calls_total",
+			Help: "Total number of gitea api calls made",
+		})
 )
-func init(){
-    prometheus.MustRegister(GithubApiCount)
+
+func init() {
+	prometheus.MustRegister(GiteaApiCount)
 }
